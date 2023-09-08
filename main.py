@@ -22,6 +22,22 @@ level1 = [
 level1_width = len(level1[0]) * 40
 level1_height = len(level1) * 40
 
+
+W, H = 1280, 720
+
+
+window = display.set_mode((W, H))
+display.set_icon(image.load("images/mana.png"))
+display.set_caption("БЕЗУМНЫЙ ГЕНИЙ ДА ЕЩЁ И МАГ")
+
+bg = transform.scale(image.load('images/bgr.png'), (W, H))
+
+
+
+
+
+
+
 """ЗВУКИ"""
 mixer.init()
 fire = mixer.Sound('sounds/fire.ogg')
@@ -135,3 +151,55 @@ def camera_config(camera, target_rect):
     t = min(0, t)  # Не виходимо за верхню межу
 
     return Rect(l, t, w, h)
+
+class Settings(sprite.Sprite):
+    def __init__(self, x, y, w, h, speed, img):
+        super().__init__()
+
+        self.speed = speed
+        self.width = w
+        self.height = h 
+        self.image = transform.scale(image.load(img), (self.width, self.height))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+    def reset(self): 
+        window.blit(self.image, (self.rect.x, self.rect.y))
+
+
+
+
+window.blit(bg, (0, 0))
+
+x, y = 0, 0
+for r in level1:
+    for c in r:
+        if c == "-":
+            r1 = Settings(x, y, 40, 40, 0, platform)
+            r1.reset()
+        if c == "/":
+            r2 = Settings(x, y, 40, 180, 0, stairs)
+            r2.reset()
+        if c == "°":
+            r3 = Settings(x, y, 40, 40, 0, coin_img)
+            r3.reset()
+        if c == "r":
+            r4 = Settings(x, y, 40, 40, 0, nothing)
+            r4.reset()
+        if c == "l":
+            r5 = Settings(x, y, 40, 40, 0, nothing)
+            r5.reset()
+        x += 40
+    x = 0
+    y += 40
+        
+            
+        
+
+game = True
+while game:
+    time.delay(30)
+    for e in event.get():
+        if e.type == QUIT: 
+            game = False
+    display.update()
