@@ -28,7 +28,7 @@ W, H = 1280, 720
 
 window = display.set_mode((W, H))
 display.set_icon(image.load("images/mana.png"))
-display.set_caption("БЕЗУМНЫЙ ГЕНИЙ ДА ЕЩЁ И МАГ")
+display.set_caption("BLOCKADA")
 
 bg = transform.scale(image.load('images/bgr.png'), (W, H))
 
