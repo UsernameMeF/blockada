@@ -30,7 +30,7 @@ window = display.set_mode((W, H))
 display.set_icon(image.load("images/mana.png"))
 display.set_caption("BLOCKADA")
 
-bg = transform.scale(image.load('images/bgr.png'), (W, H))
+bg = transform.scale(image.load('new_images/bgr.jpg'), (W, H))
 
 
 
@@ -76,17 +76,19 @@ pausa = font4.render('PAUSE', True, (255, 0, 0), (245, 222, 179))
 hero_l = "images/sprite1.png"
 hero_r = "images/sprite1_r.png"
 
-enemy_r = "images/cyborg.png"
-enemy_l = "images/cyborg_r.png"
 
-coin_img = "images/coin.png"
+
+enemy_r = "new_images/grib_r.png"
+enemy_l = "new_images/grib_l.png"
+
+coin_img = "new_images/coin.png"
 door_img = "images/door.png"
 key_img = "images/key.png"
 chest_open = "images/cst_open.png"
 chest_close = "images/cst_close.png"
 stairs = "images/stair.png"
 portal_img = "images/portal.png"
-platform = "images/platform.png"
+platform = "new_images/platform.png"
 power = "images/mana.png"
 nothing = "images/nothing.png"
 boss = "images/nothing.png"
@@ -151,6 +153,10 @@ def camera_config(camera, target_rect):
     t = min(0, t)  # Не виходимо за верхню межу
 
     return Rect(l, t, w, h)
+ 
+
+camera = Camera(camera_config, level1_width, level1_height)
+
 
 class Settings(sprite.Sprite):
     def __init__(self, x, y, w, h, speed, img):
@@ -166,40 +172,100 @@ class Settings(sprite.Sprite):
     def reset(self): 
         window.blit(self.image, (self.rect.x, self.rect.y))
 
+class Player(Settings):
+    def update_rl(self):
+        keys = key.get_pressed()
+        if keys[K_a]:
+            self.rect.x -= self.speed
+        if keys[K_d]:
+            self.rect.x += self.speed
+
+    def update_ud(self):
+        keys = key.get_pressed()
+        if keys[K_w]:
+            self.rect.y -= self.speed
+        if keys[K_s]:
+            self.rect.y += self.speed
 
 
+def start_pos():
+    global hero, items, platforms, stairs_lst, coins_lst, blocks_r, blocks_l
+    hero = Player(300, 650, 50, 50, 5, hero_r)
+    global items
+    items = sprite.Group()
+    platforms = []
+    stairs_lst = []
+    coins_lst = []
+    blocks_r = []
+    blocks_l = []
 
-window.blit(bg, (0, 0))
-
-x, y = 0, 0
-for r in level1:
-    for c in r:
-        if c == "-":
-            r1 = Settings(x, y, 40, 40, 0, platform)
-            r1.reset()
-        if c == "/":
-            r2 = Settings(x, y, 40, 180, 0, stairs)
-            r2.reset()
-        if c == "°":
-            r3 = Settings(x, y, 40, 40, 0, coin_img)
-            r3.reset()
-        if c == "r":
-            r4 = Settings(x, y, 40, 40, 0, nothing)
-            r4.reset()
-        if c == "l":
-            r5 = Settings(x, y, 40, 40, 0, nothing)
-            r5.reset()
-        x += 40
-    x = 0
-    y += 40
+    x, y = 0, 0
+    for r in level1:
+        for c in r:
+            if c == "-":
+                r1 = Settings(x, y, 40, 40, 0, platform)
+                platforms.append(r1)
+                items.add(r1)
+            if c == "/":
+                r2 = Settings(x, y-40, 40, 180, 0, stairs)
+                stairs_lst.append(r2)
+                items.add(r2)
+            if c == "°":
+                r3 = Settings(x, y, 40, 40, 0, coin_img)
+                coins_lst.append(r3)
+                items.add(r3)
+            if c == "r":
+                r4 = Settings(x, y, 40, 40, 0, nothing)
+                blocks_r.append(r4)
+                items.add(r4)
+            if c == "l":
+                r5 = Settings(x, y, 40, 40, 0, nothing)
+                blocks_l.append(r5)
+                items.add(r5)
+            x += 40
+        x = 0
+        y += 40
+    items.add(hero)
         
-            
-        
+def collides():
+    for stair in stairs_lst:
+        if sprite.collide_rect(hero, stair):
+            hero.update_ud()
+            if hero.rect.y <= (stair.rect.y - 40):
+                hero.rect.y = stair.rect.y - 40 
+            if hero.rect.y >= (stair.rect.y + 120):
+                hero.rect.y = stair.rect.y + 120
+    for r in blocks_r:
+        if sprite.collide_rect(hero, r):
+            hero.rect.x = r.rect.x + hero.width*1.5
+    for l in blocks_l:
+        if sprite.collide_rect(hero, l):
+            hero.rect.x = l.rect.x - hero.width*1.5
+    
 
+
+
+
+
+
+points = 0
+
+start_pos()
 game = True
 while game:
-    time.delay(30)
+    time.delay(10)
+    window.blit(bg, (0, 0))
+    hero.update_rl()
+    camera.update(hero)
+    for i in items:
+        window.blit(i.image, camera.apply(i))
+
+
     for e in event.get():
         if e.type == QUIT: 
             game = False
+    window.blit(transform.scale(image.load(coin_img), (30, 30)), (10, 10))
+    coin_txt = font2.render(":" + str(points), 1, (255, 255, 255))
+    window.blit(coin_txt, (40, 5))
+    collides()
     display.update()
