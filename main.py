@@ -31,6 +31,8 @@ window = display.set_mode((W, H))
 display.set_icon(image.load("images/mana.png"))
 display.set_caption("BLOCKADA")
 
+clock = time.Clock()
+
 bg = transform.scale(image.load('new_images/bgr.jpg'), (W, H))
 
 
@@ -84,7 +86,7 @@ enemy_l = "new_images/grib_l.png"
 
 coin_img = "new_images/coin.png"
 door_img = "images/door.png"
-key_img = "images/key.png"
+key_img = "new_images/key.png"
 chest_open = "images/cst_open.png"
 chest_close = "images/cst_close.png"
 stairs = "images/stair.png"
@@ -206,7 +208,8 @@ class Enemy(Settings):
 
 def start_pos():
     global hero, items, platforms, stairs_lst, coins_lst, blocks_r, blocks_l
-    hero = Player(300, 650, 50, 50, 5, hero_r)
+    global door, key1, chest
+    hero = Player(300, 650, 50, 50, 17, hero_r)
 
     en1 = Enemy(400, 480, 50, 50, 3, enemy_r, "left")
     en2 = Enemy(230, 320, 50, 50, 3, enemy_r, "left")
@@ -216,6 +219,10 @@ def start_pos():
     global enemies
     enemies = sprite.Group()
     enemies.add(en1, en2, en3, en4)
+
+    chest = Settings(500, 130, 90, 70, 0, chest_close)
+    key1 = Settings(430, 150, 20, 40, 0, key_img)
+    door = Settings(1200, 580, 50, 100, 0, door_img)
 
 
     global items
@@ -252,12 +259,13 @@ def start_pos():
             x += 40
         x = 0
         y += 40
-    items.add(hero)
     items.add(en1, en2, en3, en4)
-
+    items.add(chest, key1, door)
+    items.add(hero)
         
 def collides():
     global points
+    key_pressed = key.get_pressed()
     for stair in stairs_lst:
         if sprite.collide_rect(hero, stair):
             hero.update_ud()
@@ -281,18 +289,18 @@ def collides():
             coins_lst.remove(coin)
             items.remove(coin)
             points += 1
+    if sprite.collide_rect(hero, key1):
+        window.blit(e_tap, (500, 50))
+        if key_pressed[K_e]:
+            items.remove(key1)
+            key1.rect.y = -100
+
     
-
-
-
-
-
-
 
 start_pos()
 game = True
 while game:
-    time.delay(5)
+    
     window.blit(bg, (0, 0))
     hero.update_rl()
     enemies.update()
@@ -308,4 +316,5 @@ while game:
     coin_txt = font2.render(":" + str(points), 1, (255, 255, 255))
     window.blit(coin_txt, (40, 5))
     collides()
+    clock.tick(60)
     display.update()
