@@ -5,7 +5,7 @@ level1 = [
     "r                                                                    .",
     "r                                                                    .",
     "r                                                                    .",
-    "rr    °  °      l                             r    °  °  °     l     .",
+    "rr    °  ° k    l                             r    °  °  °     l     .",
     "r  ------------                                ---------------       .",
     "rr / l                                       r / l         r / l     .",
     "rr   l                                       r   l         r   l     .",
@@ -15,7 +15,7 @@ level1 = [
     "r     r   l                                          r   l           .",
     "r     r       °  °   l                       r   °  °    l           .",
     "r       ------------                           ---------             .",
-    "r                r / l                       r / l                   .",
+    "r                r / l        d              r / l                   .",
     "r                r   l                       r   l                   .",
     "r                                                                    .",
     "----------------------------------------------------------------------"]
@@ -207,8 +207,9 @@ class Enemy(Settings):
 
 
 def start_pos():
-    global hero, items, platforms, stairs_lst, coins_lst, blocks_r, blocks_l
-    global door, key1, chest
+    global hero, items, platforms, stairs_lst, coins_lst, blocks_r, blocks_l, door_lst, key1_lst#, chest_lst
+    #global door, key1, chest
+    global chest
     hero = Player(300, 650, 50, 50, 17, hero_r)
 
     en1 = Enemy(400, 480, 50, 50, 3, enemy_r, "left")
@@ -220,9 +221,9 @@ def start_pos():
     enemies = sprite.Group()
     enemies.add(en1, en2, en3, en4)
 
-    chest = Settings(500, 130, 90, 70, 0, chest_close)
-    key1 = Settings(430, 150, 20, 40, 0, key_img)
-    door = Settings(1200, 580, 50, 100, 0, door_img)
+    chest = Settings(525, 150, 70, 55, 0, chest_close)
+    #key1 = Settings(430, 150, 20, 40, 0, key_img)
+    #door = Settings(1200, 580, 50, 100, 0, door_img)
 
 
     global items
@@ -232,6 +233,10 @@ def start_pos():
     coins_lst = []
     blocks_r = []
     blocks_l = []
+    door_lst = []
+    key1_lst = []
+    #chest_lst = []
+
 
     x, y = 0, 0
     for r in level1:
@@ -256,11 +261,24 @@ def start_pos():
                 r5 = Settings(x, y, 40, 40, 0, nothing)
                 blocks_l.append(r5)
                 items.add(r5)
+            if c == "d":
+                r6 = Settings(x, y, 70, 130, 0, door_img)
+                door_lst.append(r6)
+                items.add(r6)
+            if c == "k":
+                r7 = Settings(x, y, 20, 40, 0, key_img)
+                key1_lst.append(r7)
+                items.add(r7)
+            #if c == "c":
+                #r8 = Settings(x, y, 90, 70, 0, chest_close)
+                #chest_lst.append(r8)
+                #items.add(r8)
             x += 40
         x = 0
         y += 40
     items.add(en1, en2, en3, en4)
-    items.add(chest, key1, door)
+    #items.add(chest, key1, door)
+    items.add(chest)
     items.add(hero)
         
 def collides():
@@ -289,11 +307,12 @@ def collides():
             coins_lst.remove(coin)
             items.remove(coin)
             points += 1
-    if sprite.collide_rect(hero, key1):
-        window.blit(e_tap, (500, 50))
-        if key_pressed[K_e]:
-            items.remove(key1)
-            key1.rect.y = -100
+    for key1 in key1_lst:
+        if sprite.collide_rect(hero, key1):
+            window.blit(e_tap, (500, 50))
+            if key_pressed[K_e]:
+                items.remove(key1)
+                key1.rect.y = -100
 
     
 
@@ -318,3 +337,4 @@ while game:
     collides()
     clock.tick(60)
     display.update()
+#made it possible to change the position of keys and doors using a level matrix
