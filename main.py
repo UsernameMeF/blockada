@@ -76,7 +76,7 @@ lose = font4.render('YOU LOSE!', True, (255, 0, 0), (245, 222, 179))
 pausa = font4.render('PAUSE', True, (255, 0, 0), (245, 222, 179))
 
 """КАРТИНКИ СПРАЙТІВ"""
-hero_l = "images/sprite1.png"
+hero_l = "new_images/sprite1_l.png"
 hero_r = "new_images/sprite1_r.png"
 
 
@@ -177,11 +177,16 @@ class Settings(sprite.Sprite):
 
 class Player(Settings):
     def update_rl(self):
+        global mana
         keys = key.get_pressed()
         if keys[K_a]:
             self.rect.x -= self.speed
+            self.image = transform.scale(image.load(hero_l), (self.width, self.height))
+            mana.side = "left"
         if keys[K_d]:
+            self.image = transform.scale(image.load(hero_r), (self.width, self.height))
             self.rect.x += self.speed
+            mana.side = "right"
 
     def update_ud(self):
         keys = key.get_pressed()
@@ -204,7 +209,20 @@ class Enemy(Settings):
             self.image = transform.scale(image.load(enemy_l), (self.width, self.height))
             self.rect.x -= self.speed
 
+class Mana(Settings):
+    def __init__(self, x, y, w, h, speed, img, side):
+        Settings.__init__(self, x, y, w, h, speed, img)
+        self.side = side
+    
+    def update(self):
+        global side
+        if self.side == 'right':
+            self.rect.x += self.speed
+        if self.side == 'left':
+            self.rect.x -= self.speed
 
+
+mana = Mana(0, -100, 25, 25, 30, power, 'left')
 
 def start_pos():
     global hero, items, platforms, stairs_lst, coins_lst, blocks_r, blocks_l, door_lst, key1_lst#, chest_lst
@@ -226,8 +244,10 @@ def start_pos():
     #door = Settings(1200, 580, 50, 100, 0, door_img)
 
 
-    global items
+    global items, manas
     items = sprite.Group()
+    manas = sprite.Group()
+
     platforms = []
     stairs_lst = []
     coins_lst = []
@@ -280,9 +300,12 @@ def start_pos():
     #items.add(chest, key1, door)
     items.add(chest)
     items.add(hero)
-        
+
+key_is = False
+chest1_cl = True
+
 def collides():
-    global points
+    global points, key_is, chest1_cl
     key_pressed = key.get_pressed()
     for stair in stairs_lst:
         if sprite.collide_rect(hero, stair):
@@ -296,12 +319,18 @@ def collides():
             hero.rect.x = r.rect.x + hero.width*1.5
         for en in sprite.spritecollide(r, enemies, False):
             en.side = "right"
+        for m in sprite.spritecollide(r, manas, False):
+            m.remove()
+            items.remove(m)
 
     for l in blocks_l:
         if sprite.collide_rect(hero, l):
             hero.rect.x = l.rect.x - hero.width*1.5
         for en in sprite.spritecollide(l, enemies, False):
             en.side = "left"
+        for m in sprite.spritecollide(l, manas, False):
+            m.remove()
+            items.remove(m)
     for coin in coins_lst:
         if sprite.collide_rect(hero, coin):
             coins_lst.remove(coin)
@@ -313,6 +342,26 @@ def collides():
             if key_pressed[K_e]:
                 items.remove(key1)
                 key1.rect.y = -100
+                key_is = True
+
+
+    if sprite.collide_rect(hero, chest) and key_is == False:
+        window.blit(k_need, (500, 50))
+
+    if sprite.collide_rect(hero, chest) and key_is == True and chest1_cl == True:
+        window.blit(e_tap, (500, 50))
+        if key_pressed[K_e] :
+            chest.image = transform.scale(image.load(chest_open), (chest.width, chest.height))
+            points += 10
+            chest1_cl = False
+
+    if key_pressed[K_SPACE]:
+        mana.rect.x = hero.rect.centerx
+        mana.rect.y = hero.rect.top
+        manas.add(mana)
+        items.add(mana)
+
+
 
     
 
@@ -324,6 +373,7 @@ while game:
     hero.update_rl()
     enemies.update()
     camera.update(hero)
+    mana.update()
     for i in items:
         window.blit(i.image, camera.apply(i))
 
