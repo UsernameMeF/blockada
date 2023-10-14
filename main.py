@@ -25,6 +25,8 @@ level1_height = len(level1) * 40
 
 W, H = 1280, 720
 points = 0
+key_num = 0
+door_coll = ""
 
 
 window = display.set_mode((W, H))
@@ -183,7 +185,7 @@ class Player(Settings):
             self.rect.x -= self.speed
             self.image = transform.scale(image.load(hero_l), (self.width, self.height))
             mana.side = "left"
-        if keys[K_d]:
+        if keys[K_d] and door_coll != True:
             self.image = transform.scale(image.load(hero_r), (self.width, self.height))
             self.rect.x += self.speed
             mana.side = "right"
@@ -305,7 +307,7 @@ key_is = False
 chest1_cl = True
 
 def collides():
-    global points, key_is, chest1_cl
+    global points, key_is, chest1_cl, key_num, door, door_coll
     key_pressed = key.get_pressed()
     for stair in stairs_lst:
         if sprite.collide_rect(hero, stair):
@@ -343,6 +345,23 @@ def collides():
                 items.remove(key1)
                 key1.rect.y = -100
                 key_is = True
+                key_num += 1
+    for door in door_lst:
+        if sprite.collide_rect(hero, door):
+            door_coll = True
+            if key_is == False:
+                window.blit(k_need, (500, 50))
+            elif key_is == True:
+                window.blit(e_tap, (500, 50))
+                if key_pressed[K_e] and key_is == True:
+                    door.rect.y = -500
+                    key_is = False
+                    key_num -= 1
+                    door_coll = False
+        else:
+            door_coll = False
+
+
 
 
     if sprite.collide_rect(hero, chest) and key_is == False:
@@ -350,7 +369,8 @@ def collides():
 
     if sprite.collide_rect(hero, chest) and key_is == True and chest1_cl == True:
         window.blit(e_tap, (500, 50))
-        if key_pressed[K_e] :
+        if key_pressed[K_e]:
+            key_num -= 1
             chest.image = transform.scale(image.load(chest_open), (chest.width, chest.height))
             points += 10
             chest1_cl = False
@@ -381,10 +401,13 @@ while game:
     for e in event.get():
         if e.type == QUIT: 
             game = False
-    window.blit(transform.scale(image.load(coin_img), (30, 30)), (10, 10))
+    window.blit(transform.scale(image.load(coin_img), (30, 30)), (5, 10))
+    window.blit(transform.scale(image.load(key_img), (20, 40)), (10, 50))
     coin_txt = font2.render(":" + str(points), 1, (255, 255, 255))
-    window.blit(coin_txt, (40, 5))
+    key_txt = font2.render(":" + str(key_num), 1, (255, 255, 255))
+    window.blit(coin_txt, (35, 5))
+    window.blit(key_txt, (35, 50))
     collides()
     clock.tick(60)
     display.update()
-#made it possible to change the position of keys and doors using a level matrix
+#made interactions with the door, checking for the presence of a key and stopping the player if it is not there
