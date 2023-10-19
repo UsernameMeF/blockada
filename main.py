@@ -1,23 +1,44 @@
 from pygame import *
+from time import sleep
 
+
+#level1 = [
+#    "r                                                                    .",
+#    "r                                                                    .",
+#    "r                                                                    .",
+#    "r                                                                    .",
+#    "rr    °  ° k    l                             r    °  °  °     l     .",
+#    "r  ------------                                ---------------       .",
+#    "rr / l                                       r / l         r / l     .",
+#    "rr   l                                       r   l         r   l     .",
+#    "rr     °  l                       r     °  °     l   r         l     .",
+#    "r  ------                           ------------       -------       .",
+#    "r     r / l                                          r / l           .",
+#    "r     r   l                                          r   l           .",
+#    "r     r       °  °   l                       r   °  °    l           .",
+#    "r       ------------                           ---------             .",
+#    "r                r / l        d              r / l                   .",
+#    "r                r   l                       r   l                   .",
+#    "r                                                                    .",
+#    "----------------------------------------------------------------------"]
 level1 = [
-    "r                                                                    .",
-    "r                                                                    .",
-    "r                                                                    .",
-    "r                                                                    .",
-    "rr    °  ° k    l                             r    °  °  °     l     .",
-    "r  ------------                                ---------------       .",
-    "rr / l                                       r / l         r / l     .",
-    "rr   l                                       r   l         r   l     .",
-    "rr     °  l                       r     °  °     l   r         l     .",
-    "r  ------                           ------------       -------       .",
-    "r     r / l                                          r / l           .",
-    "r     r   l                                          r   l           .",
-    "r     r       °  °   l                       r   °  °    l           .",
-    "r       ------------                           ---------             .",
-    "r                r / l        d              r / l                   .",
-    "r                r   l                       r   l                   .",
-    "r                                                                    .",
+    "r                                                                    l",
+    "r                                                                    l",
+    "r                                                                    l",
+    "r                                                                    l",
+    "rr    °  ° k    l                             r    °  °  °     l     l",
+    "r  ------------                                ---------------       l",
+    "rr / l                                       r / l         r / l     l",
+    "rr   l                                       r   l         r   l     l",
+    "rr     °   k  l                   r     °  °     l   r         l     l",
+    "r  ----------                       ------------       -------       l",
+    "r     r / l                                          r / l           l",
+    "r     r   l                                          r   l           l",
+    "r     r       °  °   l                       r   °  °    l           l",
+    "r       ------------                           ---------             l",
+    "r                r / l        d              r / l                   l",
+    "r                r   l                       r   l                   l",
+    "r                                                                    l",
     "----------------------------------------------------------------------"]
 level1_width = len(level1[0]) * 40
 level1_height = len(level1) * 40
@@ -27,7 +48,7 @@ W, H = 1280, 720
 points = 0
 key_num = 0
 door_coll = ""
-
+mana_fired = False
 
 window = display.set_mode((W, H))
 display.set_icon(image.load("images/mana.png"))
@@ -37,7 +58,7 @@ clock = time.Clock()
 
 bg = transform.scale(image.load('new_images/bgr.jpg'), (W, H))
 
-
+if_lose_txt = False
 
 
 
@@ -53,6 +74,7 @@ lock = mixer.Sound('sounds/lock.wav')
 tp = mixer.Sound('sounds/teleport.ogg')
 click = mixer.Sound('sounds/click.wav')
 chest_snd = mixer.Sound('sounds/chest.wav')
+game_over_snd = mixer.Sound('sounds/game_over.ogg')
 
 """ШРИФТИ І ТЕКСТ"""
 font.init()
@@ -83,8 +105,8 @@ hero_r = "new_images/sprite1_r.png"
 
 
 
-enemy_r = "new_images/grib_r.png"
-enemy_l = "new_images/grib_l.png"
+enemy_r = "images/cyborg.png"
+enemy_l = "images/cyborg_r.png"
 
 coin_img = "new_images/coin.png"
 door_img = "images/door.png"
@@ -96,9 +118,9 @@ portal_img = "images/portal.png"
 platform = "new_images/platform.png"
 power = "images/mana.png"
 nothing = "images/nothing.png"
-boss = "images/nothing.png"
-boss_l = "images/boss_l.png"
-boss_r = "images/boss_r.pddng"
+#boss = "images/nothing.png"
+#boss_l = "images/boss_l.png"
+#boss_r = "images/boss_r.pddng"
 
 # клас для кнопок в меню
 class Button:
@@ -184,11 +206,13 @@ class Player(Settings):
         if keys[K_a]:
             self.rect.x -= self.speed
             self.image = transform.scale(image.load(hero_l), (self.width, self.height))
-            mana.side = "left"
+            if mana_fired != True:
+                mana.side = "left"
         if keys[K_d] and door_coll != True:
             self.image = transform.scale(image.load(hero_r), (self.width, self.height))
             self.rect.x += self.speed
-            mana.side = "right"
+            if mana_fired != True:
+                mana.side = "right"
 
     def update_ud(self):
         keys = key.get_pressed()
@@ -224,18 +248,18 @@ class Mana(Settings):
             self.rect.x -= self.speed
 
 
-mana = Mana(0, -100, 25, 25, 30, power, 'left')
+mana = Mana(0, -100, 25, 25, 10, power, 'right')
 
 def start_pos():
     global hero, items, platforms, stairs_lst, coins_lst, blocks_r, blocks_l, door_lst, key1_lst#, chest_lst
     #global door, key1, chest
     global chest
-    hero = Player(300, 650, 50, 50, 17, hero_r)
+    hero = Player(300, 650, 50, 50, 5, hero_r)
 
-    en1 = Enemy(400, 480, 50, 50, 3, enemy_r, "left")
-    en2 = Enemy(230, 320, 50, 50, 3, enemy_r, "left")
-    en3 = Enemy(1900, 160, 50, 50, 3, enemy_r, "left")
-    en4 = Enemy(1700, 320, 50, 50, 3, enemy_r, "left")
+    en1 = Enemy(400, 480, 50, 50, 2, enemy_r, "left")
+    en2 = Enemy(230, 320, 50, 50, 2, enemy_r, "left")
+    en3 = Enemy(1900, 160, 50, 50, 2, enemy_r, "left")
+    en4 = Enemy(1700, 320, 50, 50, 2, enemy_r, "left")
 
     global enemies
     enemies = sprite.Group()
@@ -307,7 +331,7 @@ key_is = False
 chest1_cl = True
 
 def collides():
-    global points, key_is, chest1_cl, key_num, door, door_coll
+    global points, key_is, chest1_cl, key_num, door, door_coll, mana_fired, if_lose_txt, game
     key_pressed = key.get_pressed()
     for stair in stairs_lst:
         if sprite.collide_rect(hero, stair):
@@ -324,7 +348,19 @@ def collides():
         for m in sprite.spritecollide(r, manas, False):
             m.remove()
             items.remove(m)
+            mana_fired = False
 
+    for en in enemies:
+        if sprite.collide_rect(mana, en):
+            items.remove(mana, en)
+            enemies.remove(en)
+            manas.remove(mana)
+            mana_fired = False
+        if sprite.collide_rect(hero, en):
+            if_lose_txt = True
+            hero.rect.y = -200
+            items.remove(hero)
+    
     for l in blocks_l:
         if sprite.collide_rect(hero, l):
             hero.rect.x = l.rect.x - hero.width*1.5
@@ -333,6 +369,7 @@ def collides():
         for m in sprite.spritecollide(l, manas, False):
             m.remove()
             items.remove(m)
+            mana_fired = False
     for coin in coins_lst:
         if sprite.collide_rect(hero, coin):
             coins_lst.remove(coin)
@@ -346,6 +383,9 @@ def collides():
                 key1.rect.y = -100
                 key_is = True
                 key_num += 1
+        if sprite.collide_rect(mana, key1):
+            items.remove(mana)
+            mana_fired = False
     for door in door_lst:
         if sprite.collide_rect(hero, door):
             door_coll = True
@@ -360,6 +400,9 @@ def collides():
                     door_coll = False
         else:
             door_coll = False
+        if sprite.collide_rect(mana, door):
+            items.remove(mana)
+            mana_fired = False
 
 
 
@@ -375,15 +418,19 @@ def collides():
             points += 10
             chest1_cl = False
 
-    if key_pressed[K_SPACE]:
+    if key_pressed[K_SPACE] and mana_fired != True:
         mana.rect.x = hero.rect.centerx
         mana.rect.y = hero.rect.top
         manas.add(mana)
         items.add(mana)
+        mana_fired = True
 
 
 
-    
+
+
+mixer.music.load('sounds/game.ogg')
+mixer.music.play()
 
 start_pos()
 game = True
@@ -397,6 +444,12 @@ while game:
     for i in items:
         window.blit(i.image, camera.apply(i))
 
+    if if_lose_txt == True:
+        window.blit(lose, (350, 300))
+        mixer.music.stop()
+        game_over_snd.play()
+        sleep(10)
+        game = False
 
     for e in event.get():
         if e.type == QUIT: 
@@ -410,4 +463,4 @@ while game:
     collides()
     clock.tick(60)
     display.update()
-#made interactions with the door, checking for the presence of a key and stopping the player if it is not there
+#The working half of the game. The only problem is possible freezes.
